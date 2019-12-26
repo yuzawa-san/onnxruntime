@@ -11,7 +11,7 @@ steps:
   displayName: 'Run Test Coverage'
   inputs:
     filePath: '$(Build.SourcesDirectory)\tools\ci_build\github\windows\run_OpenCppCoverage.ps1'
-    arguments: '-OpenCppCoverageExe:C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe -SourceRoot:"$(Build.SourcesDirectory)" -BuildRoot:"$(Build.BinariesDirectory)" -LocalBuild:$true'
+    arguments: '-OpenCppCoverageExe:"C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" -SourceRoot:"$(Build.SourcesDirectory)" -BuildRoot:"$(Build.BinariesDirectory)" -LocalBuild:$true'
   continueOnError: ${{parameters.ContinueOnError}}  
 
 - task: PublishCodeCoverageResults@1
