@@ -4,10 +4,8 @@
 # Runs OpenCppCoverage for the Lotus unit tests and ONNX tests, and merges the coverage from all test runs.
 Param(
     [Parameter(Mandatory=$true, HelpMessage="Lotus enlistment root.")][string]$SourceRoot,
-    [Parameter(Mandatory=$true, HelpMessage="Build root.")][string]$BuildRoot,
+    [Parameter(Mandatory=$true, HelpMessage="Build root.")][string]$BuildRoot
 )
-
-
 
 $coreSources = Join-Path $SourceRoot "onnxruntime\core"
 $headerSources = Join-Path $SourceRoot "include"
