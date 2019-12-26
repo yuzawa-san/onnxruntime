@@ -47,7 +47,7 @@ function RunTest([string]$test_cmd, [string[]]$test_cmd_args, [string[]]$export_
     $cmdParams += @("--","$test_cmd")
     $cmdParams += $test_cmd_args
     Write-Host "$cmd $cmdParams"
-    & $cmd $cmdParams
+    & $cmd $cmdParams 2>&1
 }
 
 # generate cobertura xml output and html report
