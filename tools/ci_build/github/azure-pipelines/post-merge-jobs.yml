@@ -31,16 +31,17 @@ jobs:
         modifyEnvironment: true
         workingFolder: '$(Build.BinariesDirectory)'
 
+    - script: |
+       python -m pip install -q pyopenssl setuptools wheel numpy mysql-connector-python   
+      workingDirectory: '$(Build.BinariesDirectory)'
+      displayName: 'Install python modules'
+
     - task: PythonScript@0
       displayName: 'Download test data'
       inputs:
         scriptPath: '$(Build.SourcesDirectory)\tools\ci_build\github\download_test_data.py'
         arguments: --test_data_url $(TestDataUrl) --build_dir $(Build.BinariesDirectory)
         workingDirectory: $(Build.BinariesDirectory)
-
-
-    - powershell: 'Start-Process -FilePath "$(Build.BinariesDirectory)\installer\opencppcoverage\installer.exe" -ArgumentList ''/SP-'', ''/VERYSILENT'', ''/SUPPRESSMSGBOXES'', ''/NORESTART'', ''/DIR="$(Build.BinariesDirectory)\OpenCppCoverage'' -NoNewWindow -Wait'
-      displayName: 'Run OpenCPPCoverage installer'
 
     - task: PythonScript@0
       displayName: 'Generate cmake config'
@@ -70,7 +71,6 @@ jobs:
 
     - template: templates/windows-code-coverage-steps.yml
       parameters:
-        OpenCppCoverageExe: '$(Build.BinariesDirectory)\OpenCppCoverage\OpenCppCoverage.exe'
         GitCommitHash: $(OnnxRuntimeGitCommitHash)    
         PublishReport: true
         PostToDashboard: true

@@ -1,7 +1,6 @@
 # Runs steps to generate and publish code coverage data
 
 parameters:
-  OpenCppCoverageExe: '$(Build.BinariesDirectory)\OpenCppCoverage\OpenCppCoverage.exe'
   GitCommitHash: $(OnnxRuntimeGitCommitHash)
   PublishReport: true
   PostToDashBoard: false
@@ -12,7 +11,7 @@ steps:
   displayName: 'Run Test Coverage'
   inputs:
     filePath: '$(Build.SourcesDirectory)\tools\ci_build\github\windows\run_OpenCppCoverage.ps1'
-    arguments: '-OpenCppCoverageExe:"${{parameters.OpenCppCoverageExe}}" -SourceRoot:"$(Build.SourcesDirectory)" -BuildRoot:"$(Build.BinariesDirectory)" -LocalBuild:$true'
+    arguments: '-OpenCppCoverageExe:C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe -SourceRoot:"$(Build.SourcesDirectory)" -BuildRoot:"$(Build.BinariesDirectory)" -LocalBuild:$true'
   continueOnError: ${{parameters.ContinueOnError}}  
 
 - task: PublishCodeCoverageResults@1
@@ -22,13 +21,6 @@ steps:
     reportDirectory: '$(Build.BinariesDirectory)/**/OpenCppCoverageResults'
   continueOnError: ${{parameters.ContinueOnError}}
   condition: ${{parameters.PublishReport}}
-
-- task: CmdLine@1
-  displayName: 'Install mysql-connector-python conda module'
-  inputs:
-    filename: '$(Build.BinariesDirectory)\packages\python\scripts\conda.exe'
-    arguments: 'install -q --insecure -y mysql-connector-python'
-  timeoutInMinutes: 10
 
 - task: PythonScript@0
   displayName: 'Generate cmake config'

@@ -121,14 +121,6 @@ def download_additional_data(build_dir, azure_region):
         shutil.rmtree(dest_dir)
       shutil.move(os.path.join(build_dir,'cmake_temp','cmake-3.15.1-win64-x64'),dest_dir)
 
-    # Download OpenCPPCoverageSetup.exe
-    opencpp_url = urljoin(additional_data_url, 'OpenCppCoverageSetup-x64-0.9.7.0.exe')
-    print("Starting download for opencppcoverage " + opencpp_url)
-    dest_folder = os.path.join(build_dir, 'installer','opencppcoverage')
-    os.makedirs(dest_folder,exist_ok=True)
-    azcopy_exe = 'azcopy.exe' if shutil.which('azcopy') else os.path.join(build_dir,'azcopy')
-    subprocess.run([azcopy_exe,'cp', '--log-level','ERROR', opencpp_url, os.path.join(dest_folder,'installer.exe')],check=True)
-
 args = parse_arguments()
 models_folder = 'models'
 
