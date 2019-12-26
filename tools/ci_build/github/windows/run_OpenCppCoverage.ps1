@@ -46,7 +46,7 @@ function RunTest([string]$test_cmd, [string[]]$test_cmd_args, [string[]]$export_
 
     $cmdParams += @("--","$test_cmd")
     $cmdParams += $test_cmd_args
-
+    Write-Host "$cmd $cmdParams"
     & $cmd $cmdParams
 }
 
