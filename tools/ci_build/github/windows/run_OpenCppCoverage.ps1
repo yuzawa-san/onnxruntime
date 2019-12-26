@@ -43,9 +43,9 @@ $onnx_test_runner = Join-Path $buildDir "onnx_test_runner.exe"
 RunTest $onnx_test_runner ($modelDir) ("binary:"  + (Join-Path $buildDir "onnx_test_runner.cov"))
 
 
-Write-Host "C-API/Shared-lib test"
-$shared_lib_test = Join-Path $buildDir "onnxruntime_shared_lib_test.exe"
-RunTest $shared_lib_test @() ("binary:" + (Join-Path $buildDir "onnxruntime_shared_lib_test.cov"))
+#Write-Host "C-API/Shared-lib test"
+#$shared_lib_test = Join-Path $buildDir "onnxruntime_shared_lib_test.exe"
+#RunTest $shared_lib_test @() ("binary:" + (Join-Path $buildDir "onnxruntime_shared_lib_test.cov"))
 
 
 Write-Host "MLAS test"
