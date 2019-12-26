@@ -3,26 +3,11 @@
 
 # Runs OpenCppCoverage for the Lotus unit tests and ONNX tests, and merges the coverage from all test runs.
 Param(
-    [Parameter(Mandatory=$true, HelpMessage="OpenCppCoverage exe.")][string]$OpenCppCoverageExe,
     [Parameter(Mandatory=$true, HelpMessage="Lotus enlistment root.")][string]$SourceRoot,
     [Parameter(Mandatory=$true, HelpMessage="Build root.")][string]$BuildRoot,
-    [Parameter(Mandatory=$false, HelpMessage="IsLocalBuild")][switch]$LocalBuild = $true
 )
 
-if (-not $LocalBuild) {
-# This is a hack to get the target path of the junctions in the build machine, lacking a neater way to do this.
-# Assumes that the junction is 2 level upper from the SourceRoot/BuildRoot
-# This is needed, because apparently the OpenCppCoverage cannot load the PDB symbol files from a junction 
 
-    $buildLeaf = Split-Path $BuildRoot -Leaf
-    $buildParent = Split-Path $BuildRoot -Parent
-    $buildParentLeaf = Split-Path $buildParent -Leaf
-    $buildParentParent = Split-Path $buildParent -Parent
-    $buildParentParentTarget = Get-Item $buildParentParent | Select-Object -ExpandProperty Target
-
-    $BuildRoot = Join-Path $buildParentParentTarget $buildParentLeaf
-    $BuildRoot = Join-Path $BuildRoot $buildLeaf
-}
 
 $coreSources = Join-Path $SourceRoot "onnxruntime\core"
 $headerSources = Join-Path $SourceRoot "include"
@@ -30,7 +15,6 @@ $buildDir = Join-Path $BuildRoot "Debug\Debug"
 
 function RunTest([string]$test_cmd, [string[]]$test_cmd_args, [string[]]$export_types, [string[]]$inputs)
 {
-    $cmd = "$OpenCppCoverageExe"
     $cmdParams = @("--sources=$headerSources","--sources=$coreSources","--modules=$buildDir","--working_dir=$buildDir")
 
     foreach($input in $inputs)
@@ -47,7 +31,7 @@ function RunTest([string]$test_cmd, [string[]]$test_cmd_args, [string[]]$export_
     $cmdParams += @("--","$test_cmd")
     $cmdParams += $test_cmd_args
     Write-Host "$cmd $cmdParams"
-    & $cmd $cmdParams 2>&1
+    & "C:\Program Files\OpenCppCoverage\OpenCppCoverage.exe" $cmdParams
 }
 
 # generate cobertura xml output and html report
