@@ -3,6 +3,7 @@
 
 #pragma once
 #ifndef NDEBUG
+#ifdef ONNXRUNTIME_ENABLE_MEMLEAK_CHECK
 // TVM need to run with shared CRT, so won't work with debug heap alloc
 #if !(defined USE_TVM || (defined USE_NGRAPH && defined _WIN32))
 void* DebugHeapAlloc(size_t size, unsigned framesToSkip = 0);
@@ -13,5 +14,6 @@ void DebugHeapFree(void* p) noexcept;
 #define malloc DebugHeapAlloc
 #define realloc DebugHeapReAlloc
 #define free DebugHeapFree
+#endif
 #endif
 #endif

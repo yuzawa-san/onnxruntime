@@ -11,6 +11,7 @@
 // It creates & destroys itself in init_seg(lib) so it should scope all user code
 //
 #ifndef NDEBUG
+#ifdef ONNXRUNTIME_ENABLE_MEMLEAK_CHECK
 // TVM need to run with shared CRT, so won't work with debug heap alloc
 #if !(defined USE_TVM || (defined USE_NGRAPH && defined _WIN32))
 constexpr int c_callstack_limit = 16;  // Maximum depth of callstack in leak trace
@@ -249,5 +250,6 @@ Memory_LeakCheck::~Memory_LeakCheck() {
   HeapDestroy(g_heap);
   g_heap = nullptr;  // Any allocations after this point will fail
 }
+#endif
 #endif
 #endif

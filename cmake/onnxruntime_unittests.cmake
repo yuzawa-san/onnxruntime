@@ -33,9 +33,9 @@ function(AddTest)
     add_dependencies(${_UT_TARGET} ${_UT_DEPENDS})
   endif(_UT_DEPENDS)
   if(_UT_DYN)
-    target_link_libraries(${_UT_TARGET} PRIVATE ${_UT_LIBS} gtest gmock onnxruntime ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(${_UT_TARGET} PRIVATE ${_UT_LIBS} GTest::gtest GTest::gmock onnxruntime ${CMAKE_DL_LIBS} Threads::Threads)
   else()
-    target_link_libraries(${_UT_TARGET} PRIVATE ${_UT_LIBS} gtest gmock ${onnxruntime_EXTERNAL_LIBRARIES})
+    target_link_libraries(${_UT_TARGET} PRIVATE ${_UT_LIBS} GTest::gtest GTest::gmock ${onnxruntime_EXTERNAL_LIBRARIES})
   endif()
   onnxruntime_add_include_to_target(${_UT_TARGET} date_interface)
   target_include_directories(${_UT_TARGET} PRIVATE ${TEST_INC_DIR})
@@ -310,7 +310,7 @@ file(GLOB onnxruntime_test_framework_src CONFIGURE_DEPENDS
 
 #with auto initialize onnxruntime
 add_library(onnxruntime_test_utils_for_framework ${onnxruntime_test_utils_src})
-onnxruntime_add_include_to_target(onnxruntime_test_utils_for_framework onnxruntime_framework gtest onnx onnx_proto)
+onnxruntime_add_include_to_target(onnxruntime_test_utils_for_framework onnxruntime_framework GTest::gtest onnx onnx_proto)
 if (onnxruntime_USE_FULL_PROTOBUF)
   target_compile_definitions(onnxruntime_test_utils_for_framework PRIVATE USE_FULL_PROTOBUF=1)
 endif()
@@ -325,7 +325,7 @@ set_target_properties(onnxruntime_test_utils_for_framework PROPERTIES FOLDER "ON
 
 #without auto initialize onnxruntime
 add_library(onnxruntime_test_utils ${onnxruntime_test_utils_src})
-onnxruntime_add_include_to_target(onnxruntime_test_utils onnxruntime_framework gtest onnx onnx_proto)
+onnxruntime_add_include_to_target(onnxruntime_test_utils onnxruntime_framework GTest::gtest onnx onnx_proto)
 if (onnxruntime_USE_FULL_PROTOBUF)
   target_compile_definitions(onnxruntime_test_utils PRIVATE USE_FULL_PROTOBUF=1)
 endif()
@@ -537,18 +537,18 @@ if(WIN32)
 endif()
 
 add_library(onnx_test_runner_common ${onnx_test_runner_common_srcs})
-onnxruntime_add_include_to_target(onnx_test_runner_common onnxruntime_common onnxruntime_framework onnxruntime_test_utils onnx onnx_proto)
+onnxruntime_add_include_to_target(onnx_test_runner_common onnxruntime_common onnxruntime_framework onnxruntime_test_utils onnx onnx_proto re2::re2)
 add_dependencies(onnx_test_runner_common onnx_test_data_proto ${onnxruntime_EXTERNAL_DEPENDENCIES})
-target_include_directories(onnx_test_runner_common PRIVATE ${eigen_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/onnx ${ONNXRUNTIME_ROOT} ${REPO_ROOT}/cmake/external/re2)
+target_include_directories(onnx_test_runner_common PRIVATE ${eigen_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/onnx ${ONNXRUNTIME_ROOT})
+
 set_target_properties(onnx_test_runner_common PROPERTIES FOLDER "ONNXRuntimeTest")
 
 set(onnx_test_libs
   onnxruntime_test_utils
   ${ONNXRUNTIME_TEST_LIBS}
-  onnx_test_data_proto
-  re2)
+  onnx_test_data_proto)
 
-list(APPEND onnx_test_libs ${onnxruntime_EXTERNAL_LIBRARIES} libprotobuf) # test code uses delimited parsing and hence needs to link with the full protobuf
+list(APPEND onnx_test_libs ${onnxruntime_EXTERNAL_LIBRARIES} protobuf::libprotobuf) # test code uses delimited parsing and hence needs to link with the full protobuf
 
 if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS)
   list(APPEND onnx_test_libs onnxruntime_language_interop onnxruntime_pyop)
@@ -621,8 +621,8 @@ if (WIN32)
 endif()
 
 if (onnxruntime_BUILD_SHARED_LIB)
-  set(onnxruntime_perf_test_libs onnxruntime_test_utils onnx_test_runner_common onnxruntime_common re2
-          onnx_test_data_proto onnx_proto libprotobuf ${GETOPT_LIB_WIDE} onnxruntime ${onnxruntime_EXTERNAL_LIBRARIES}
+  set(onnxruntime_perf_test_libs onnxruntime_test_utils onnx_test_runner_common onnxruntime_common re2::re2
+          onnx_test_data_proto onnx_proto protobuf::libprotobuf ${GETOPT_LIB_WIDE} onnxruntime ${onnxruntime_EXTERNAL_LIBRARIES}
           ${SYS_PATH_LIB} ${CMAKE_DL_LIBS})
   if(onnxruntime_USE_NSYNC)
     list(APPEND onnxruntime_perf_test_libs nsync_cpp)
@@ -691,8 +691,7 @@ if (onnxruntime_BUILD_SHARED_LIB)
       list(APPEND onnxruntime_shared_lib_test_SRC ${ONNXRUNTIME_SHARED_LIB_TEST_SRC_DIR}/test_model_loading.cc)
     endif()
   endif()
-  set(onnxruntime_shared_lib_test_LIBS onnxruntime_mocked_allocator onnxruntime_test_utils onnxruntime_common
-          onnx_proto)
+  set(onnxruntime_shared_lib_test_LIBS onnxruntime_mocked_allocator onnxruntime_test_utils)
   if(onnxruntime_USE_NSYNC)
     list(APPEND onnxruntime_shared_lib_test_LIBS nsync_cpp)
   endif()
@@ -700,7 +699,6 @@ if (onnxruntime_BUILD_SHARED_LIB)
           TARGET onnxruntime_shared_lib_test
           SOURCES ${onnxruntime_shared_lib_test_SRC}
           LIBS ${onnxruntime_shared_lib_test_LIBS}
-          protobuf::libprotobuf
           DEPENDS ${all_dependencies}
   )
 endif()

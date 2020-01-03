@@ -9,7 +9,7 @@
 
 static const GUID OrtProviderGuid = {0x3a26b1ff, 0x7484, 0x7484, {0x74, 0x84, 0x15, 0x26, 0x1f, 0x42, 0x61, 0x4d}};
 
-int real_main(int argc, TCHAR* argv[]) {
+int real_main(int , TCHAR* argv[]) {
   ProfilingInfo context;
   TraceSession session;
   session.AddHandler(OrtProviderGuid, OrtEventHandler, &context);

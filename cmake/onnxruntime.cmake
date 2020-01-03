@@ -25,7 +25,12 @@ add_custom_command(OUTPUT ${SYMBOL_FILE} ${CMAKE_CURRENT_BINARY_DIR}/generated_s
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_target(onnxruntime_generate_def ALL DEPENDS ${SYMBOL_FILE} ${CMAKE_CURRENT_BINARY_DIR}/generated_source.c)
-add_library(onnxruntime SHARED ${CMAKE_CURRENT_BINARY_DIR}/generated_source.c)
+if(WIN32)
+    add_library(onnxruntime SHARED ${SYMBOL_FILE} "${ONNXRUNTIME_ROOT}/core/framework/empty.cc")
+else()
+    add_library(onnxruntime SHARED ${CMAKE_CURRENT_BINARY_DIR}/generated_source.c)
+endif()
+
 set_target_properties(onnxruntime PROPERTIES VERSION ${ORT_VERSION})
 add_dependencies(onnxruntime onnxruntime_generate_def ${onnxruntime_EXTERNAL_DEPENDENCIES})
 target_include_directories(onnxruntime PRIVATE ${ONNXRUNTIME_ROOT})
@@ -53,7 +58,6 @@ if (NOT WIN32)
   endif()
 endif()
 
-#The BEGIN_WHOLE_ARCHIVE/END_WHOLE_ARCHIVE part should contain the implementations of all the C API functions
 target_link_libraries(onnxruntime PRIVATE
     onnxruntime_session
     ${onnxruntime_libs}

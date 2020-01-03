@@ -2,11 +2,9 @@
 // Licensed under the MIT License.
 
 #include "core/session/onnxruntime_cxx_api.h"
-#include "core/framework/allocator.h"
 #include "core/providers/cpu/cpu_provider_factory.h"
 #include "test_fixture.h"
 
-using namespace onnxruntime;
 
 TEST_F(CApiTest, allocation_info) {
   OrtMemoryInfo *info1, *info2;

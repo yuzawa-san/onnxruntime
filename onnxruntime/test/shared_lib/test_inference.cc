@@ -13,7 +13,6 @@
 #include <gtest/gtest.h>
 #include "test_allocator.h"
 #include "test_fixture.h"
-#include "onnx_protobuf.h"
 
 struct Input {
   const char* name;
@@ -427,9 +426,5 @@ TEST_F(CApiTest, override_initializer) {
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   int ret = RUN_ALL_TESTS();
-  //TODO: Linker on Mac OS X is kind of strange. The next line of code will trigger a crash
-#ifndef __APPLE__
-  ::google::protobuf::ShutdownProtobufLibrary();
-#endif
   return ret;
 }
