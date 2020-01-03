@@ -383,7 +383,7 @@ endif()
 if(NOT TARGET re2::re2)
   add_subdirectory(external/re2 EXCLUDE_FROM_ALL)
   set_target_properties(re2 PROPERTIES FOLDER "External/re2")
-  add_library(re2:re2 ALIAS re2)
+  add_library(re2::re2 ALIAS re2)
 endif()
 
 # bounds checking behavior.
