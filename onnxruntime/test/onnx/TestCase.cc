@@ -300,6 +300,33 @@ OrtValue* TensorToOrtValue(const ONNX_NAMESPACE::TensorProto& t, onnxruntime::te
   return temp_value.release();
 }
 
+//Copied from protobuf\src\google\protobuf\util\delimited_message_util.cc
+bool ProtobufParseDelimitedFromCodedStream(google::protobuf::MessageLite* message,
+                                   google::protobuf::io::CodedInputStream* input,
+                                   bool* clean_eof) {
+  if (clean_eof != NULL) *clean_eof = false;
+  int start = input->CurrentPosition();
+
+  // Read the size.
+  uint32_t size;
+  if (!input->ReadVarint32(&size)) {
+    if (clean_eof != NULL) *clean_eof = input->CurrentPosition() == start;
+    return false;
+  }
+
+  // Tell the stream not to read beyond that size.
+  google::protobuf::io::CodedInputStream::Limit limit = input->PushLimit(size);
+
+  // Parse the message.
+  if (!message->MergeFromCodedStream(input)) return false;
+  if (!input->ConsumedEntireMessage()) return false;
+
+  // Release the limit.
+  input->PopLimit(limit);
+
+  return true;
+}
+
 void LoopDataFile(int test_data_pb_fd, bool is_input, const TestModelInfo* modelinfo,
                   std::unordered_map<std::string, OrtValue*>& name_data_map, onnxruntime::test::HeapBuffer& b,
                   std::ostringstream& oss) {
@@ -309,7 +336,7 @@ void LoopDataFile(int test_data_pb_fd, bool is_input, const TestModelInfo* model
   bool clean_eof = false;
   int item_id = 1;
   for (proto::TraditionalMLData data;
-       google::protobuf::util::ParseDelimitedFromCodedStream(&data, &coded_input, &clean_eof);
+       ProtobufParseDelimitedFromCodedStream(&data, &coded_input, &clean_eof);
        ++item_id, data.Clear()) {
     try {
       ORT_VALUE_HOLDER gvalue(nullptr, Ort::GetApi().ReleaseValue);

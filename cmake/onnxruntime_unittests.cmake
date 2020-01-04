@@ -539,16 +539,15 @@ endif()
 add_library(onnx_test_runner_common ${onnx_test_runner_common_srcs})
 onnxruntime_add_include_to_target(onnx_test_runner_common onnxruntime_common onnxruntime_framework onnxruntime_test_utils onnx onnx_proto re2::re2)
 add_dependencies(onnx_test_runner_common onnx_test_data_proto ${onnxruntime_EXTERNAL_DEPENDENCIES})
-target_include_directories(onnx_test_runner_common PRIVATE ${eigen_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/onnx ${ONNXRUNTIME_ROOT})
+target_include_directories(onnx_test_runner_common PRIVATE ${eigen_INCLUDE_DIRS} ${RE2_INCLUDE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/onnx ${ONNXRUNTIME_ROOT})
 
 set_target_properties(onnx_test_runner_common PROPERTIES FOLDER "ONNXRuntimeTest")
 
 set(onnx_test_libs
   onnxruntime_test_utils
   ${ONNXRUNTIME_TEST_LIBS}
-  onnx_test_data_proto)
-
-list(APPEND onnx_test_libs ${onnxruntime_EXTERNAL_LIBRARIES} protobuf::libprotobuf) # test code uses delimited parsing and hence needs to link with the full protobuf
+  onnx_test_data_proto
+  ${onnxruntime_EXTERNAL_LIBRARIES}) # test code uses delimited parsing and hence needs to link with the full protobuf
 
 if (onnxruntime_ENABLE_LANGUAGE_INTEROP_OPS)
   list(APPEND onnx_test_libs onnxruntime_language_interop onnxruntime_pyop)
@@ -622,12 +621,15 @@ endif()
 
 if (onnxruntime_BUILD_SHARED_LIB)
   set(onnxruntime_perf_test_libs onnxruntime_test_utils onnx_test_runner_common onnxruntime_common re2::re2
-          onnx_test_data_proto onnx_proto protobuf::libprotobuf ${GETOPT_LIB_WIDE} onnxruntime ${onnxruntime_EXTERNAL_LIBRARIES}
-          ${SYS_PATH_LIB} ${CMAKE_DL_LIBS})
+          onnx_test_data_proto onnx_proto ${GETOPT_LIB_WIDE} onnxruntime 
+          ${PROTOBUF_LIB}  ${SYS_PATH_LIB} ${CMAKE_DL_LIBS})
   if(onnxruntime_USE_NSYNC)
     list(APPEND onnxruntime_perf_test_libs nsync_cpp)
   endif()
   target_link_libraries(onnxruntime_perf_test PRIVATE ${onnxruntime_perf_test_libs} Threads::Threads)
+  if(WIN32)
+    target_link_libraries(onnxruntime_perf_test PRIVATE debug dbghelp)
+  endif()
   if(tensorflow_C_PACKAGE_PATH)
     target_include_directories(onnxruntime_perf_test PRIVATE ${tensorflow_C_PACKAGE_PATH}/include)
     target_link_directories(onnxruntime_perf_test PRIVATE ${tensorflow_C_PACKAGE_PATH}/lib)
