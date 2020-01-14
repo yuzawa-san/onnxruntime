@@ -12,11 +12,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 include(CheckCXXCompilerFlag)
 include(CheckLanguage)
 
-# CentOS compiler is old but it does allow certain C++14 features
-# such as lambda captures and they are convinient
-# On the other hand it does not allow some others.
-# So we cant' regulate simply with the standard.
-set(CMAKE_CXX_STANDARD 14)
+#If the current CXX standard is not 17, this definition is still harmless
+add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
 
 # General C# prperties
 if (onnxruntime_BUILD_CSHARP)
@@ -277,7 +274,7 @@ endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/protobuf/cmake EXCLUDE_FROM_ALL)
 set_target_properties(libprotobuf PROPERTIES FOLDER "External/Protobuf")
 set_target_properties(libprotobuf-lite PROPERTIES FOLDER "External/Protobuf")
-set_target_properties(libprotoc PROPERTIES FOLDER "External/Protobuf")	
+set_target_properties(libprotoc PROPERTIES FOLDER "External/Protobuf")
 set_target_properties(protoc PROPERTIES FOLDER "External/Protobuf")
 if (onnxruntime_USE_FULL_PROTOBUF)
   add_library(protobuf::libprotobuf ALIAS libprotobuf)
@@ -443,11 +440,8 @@ if (WIN32)
     # parallel build
     # These compiler opitions cannot be forwarded to NVCC, so cannot use add_compiler_options
     string(APPEND CMAKE_CXX_FLAGS " /MP")
-    string(APPEND CMAKE_CXX_FLAGS
-      " /wd4503" # Decorated name length exceeded.
-      " /wd4127" # conditional expression is constant.
-      " /wd4146" # unary minus operator applied to unsigned type. Needed for Protobuf
-    )
+    #in order to fix this warning, we need C++17 so that we can use 'if constexpr'
+    string(APPEND CMAKE_CXX_FLAGS " /wd4127")
     if (onnxruntime_ENABLE_STATIC_ANALYSIS)
         string(APPEND CMAKE_CXX_FLAGS
             " /analyze:WX- "
@@ -588,29 +582,29 @@ if(onnxruntime_USE_OPENVINO)
 
   add_definitions(-DUSE_OPENVINO=1)
 
-	if(onnxruntime_USE_OPENVINO_MYRIAD)
-		add_definitions(-DOPENVINO_CONFIG_MYRIAD=1)
-	endif()
-
-	if(onnxruntime_USE_OPENVINO_GPU_FP32)
-		add_definitions(-DOPENVINO_CONFIG_GPU_FP32=1)
-	endif()
-
-	if(onnxruntime_USE_OPENVINO_GPU_FP16)
-		add_definitions(-DOPENVINO_CONFIG_GPU_FP16=1)
-	endif()
-
-	if(onnxruntime_USE_OPENVINO_CPU_FP32)
-		add_definitions(-DOPENVINO_CONFIG_CPU_FP32=1)
-	endif()
-
-	if(onnxruntime_USE_OPENVINO_VAD_M)
-		add_definitions(-DOPENVINO_CONFIG_VAD_M=1)
+    if(onnxruntime_USE_OPENVINO_MYRIAD)
+        add_definitions(-DOPENVINO_CONFIG_MYRIAD=1)
     endif()
 
-	if(onnxruntime_USE_OPENVINO_VAD_F)
-		add_definitions(-DOPENVINO_CONFIG_VAD_F=1)
-	endif()
+    if(onnxruntime_USE_OPENVINO_GPU_FP32)
+        add_definitions(-DOPENVINO_CONFIG_GPU_FP32=1)
+    endif()
+
+    if(onnxruntime_USE_OPENVINO_GPU_FP16)
+        add_definitions(-DOPENVINO_CONFIG_GPU_FP16=1)
+    endif()
+
+    if(onnxruntime_USE_OPENVINO_CPU_FP32)
+        add_definitions(-DOPENVINO_CONFIG_CPU_FP32=1)
+    endif()
+
+    if(onnxruntime_USE_OPENVINO_VAD_M)
+        add_definitions(-DOPENVINO_CONFIG_VAD_M=1)
+    endif()
+
+    if(onnxruntime_USE_OPENVINO_VAD_F)
+        add_definitions(-DOPENVINO_CONFIG_VAD_F=1)
+    endif()
 
 endif()
 
