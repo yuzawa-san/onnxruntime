@@ -12,8 +12,13 @@ set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 include(CheckCXXCompilerFlag)
 include(CheckLanguage)
 
-#If the current CXX standard is not 17, this definition is still harmless
-add_definitions(-D_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS=1)
+if(NOT CMAKE_CXX_STANDARD)
+  # CentOS compiler is old but it does allow certain C++14 features
+  # such as lambda captures and they are convinient
+  # On the other hand it does not allow some others.
+  # So we cant' regulate simply with the standard.
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
 # General C# prperties
 if (onnxruntime_BUILD_CSHARP)
@@ -274,8 +279,12 @@ endif()
 add_subdirectory(${PROJECT_SOURCE_DIR}/external/protobuf/cmake EXCLUDE_FROM_ALL)
 set_target_properties(libprotobuf PROPERTIES FOLDER "External/Protobuf")
 set_target_properties(libprotobuf-lite PROPERTIES FOLDER "External/Protobuf")
-set_target_properties(libprotoc PROPERTIES FOLDER "External/Protobuf")
-set_target_properties(protoc PROPERTIES FOLDER "External/Protobuf")
+if(TARGET libprotoc)
+  set_target_properties(libprotoc PROPERTIES FOLDER "External/Protobuf")
+endif()
+if(TARGET protoc)
+  set_target_properties(protoc PROPERTIES FOLDER "External/Protobuf")
+endif()
 if (onnxruntime_USE_FULL_PROTOBUF)
   add_library(protobuf::libprotobuf ALIAS libprotobuf)
 else()
@@ -459,9 +468,13 @@ if (WIN32)
         string(APPEND CMAKE_CXX_FLAGS " /W4")
     endif()
 
+    if (NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+        string(APPEND CMAKE_CXX_FLAGS " /wd4244")
+    endif()
+
     # treat warning as error only on x64 platform.
     # For x86 and cross-compiled ARM64 binaries, there are too many warnings to fix, hence ignore warnings for now
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8 AND onnxruntime_DEV_MODE AND NOT CMAKE_CROSSCOMPILING)
+    if (onnxruntime_DEV_MODE AND NOT CMAKE_CROSSCOMPILING)
       # treat warnings as errors
       string(APPEND CMAKE_CXX_FLAGS " /WX")
       foreach(type EXE STATIC SHARED)
