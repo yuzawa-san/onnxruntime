@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
 /**
@@ -44,8 +43,6 @@ public class OrtSession extends NativeObject {
   private final Map<String, NodeInfo> outputInfo;
 
   private final OnnxModelMetadata metadata;
-
-  private final Set<RunOptions> activeRunOptions;
 
   /**
    * Create a session loading the model from disk.
@@ -110,7 +107,6 @@ public class OrtSession extends NativeObject {
     super(sessionHandle);
     this.environment = environment;
     this.allocator = allocator;
-    this.activeRunOptions = ConcurrentHashMap.newKeySet();
     try (NativeUsage allocatorReference = allocator.use()) {
       long allocatorHandle = allocatorReference.handle();
       metadata = constructMetadata(OnnxRuntime.ortApiHandle, sessionHandle, allocatorHandle);
@@ -318,29 +314,18 @@ public class OrtSession extends NativeObject {
          */
         i++;
       }
-      OnnxValue[] outputValues;
-      /*
-       * Collect the RunOptions for terminate method to use, since there is no other way to interrupt JNI
-       * execution beyond calling RunOptions.setTerminate(true).
-       */
-      activeRunOptions.add(runOptions);
-      try {
-        outputValues =
-            run(
-                OnnxRuntime.ortApiHandle,
-                sessionReference.handle(),
-                allocatorReference.handle(),
-                allocator,
-                requestedInputsArray,
-                inputHandles,
-                inputHandles.length,
-                requestedOutputsArray,
-                requestedOutputsArray.length,
-                runOptionsReference.handle());
-      } finally {
-        // the RunOptions does not need to be terminated since the run is complete
-        activeRunOptions.remove(runOptions);
-      }
+      OnnxValue[] outputValues =
+          run(
+              OnnxRuntime.ortApiHandle,
+              sessionReference.handle(),
+              allocatorReference.handle(),
+              allocator,
+              requestedInputsArray,
+              inputHandles,
+              inputHandles.length,
+              requestedOutputsArray,
+              requestedOutputsArray.length,
+              runOptionsReference.handle());
       return new Result(requestedOutputsArray, outputValues);
     }
   }
@@ -408,24 +393,6 @@ public class OrtSession extends NativeObject {
         + ",numOutputs="
         + getNumOutputs()
         + ")";
-  }
-
-  /**
-   * Terminate running model evaluations.
-   *
-   * <p>This is typically used in multi-threaded environments, where session management and model
-   * evaluation are occurring in different threads. This method can be used prior to calling {@link
-   * #close()} to prevent the normal behavior of blocking until pending model evaluations are
-   * completed.
-   *
-   * @throws OrtException If the terminate setting failed.
-   */
-  public synchronized void terminate() throws OrtException {
-    for (RunOptions runOptions : activeRunOptions) {
-      if (!runOptions.isClosed()) {
-        runOptions.setTerminate(true);
-      }
-    }
   }
 
   @Override

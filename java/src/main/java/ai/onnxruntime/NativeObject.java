@@ -1,12 +1,10 @@
 package ai.onnxruntime;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 /**
- * This is the base class for anything backed by JNI. It manages open versus closed state and usage
- * handling.
+ * This is the base class for anything backed by JNI. It manages open versus closed state and hides
+ * the underlying native handle.
  */
 abstract class NativeObject implements AutoCloseable {
 
@@ -18,21 +16,13 @@ abstract class NativeObject implements AutoCloseable {
     }
   }
 
-  private static final Logger logger = Logger.getLogger(NativeObject.class.getName());
-
-  private final Object handleLock = new Object();
-
   private final long handle;
 
   private volatile boolean closed;
 
-  /** This is used to ensure the close operation will only proceed when there are no more usages. */
-  private final AtomicInteger activeUsagesCount;
-
   NativeObject(long handle) {
     this.handle = handle;
     this.closed = false;
-    this.activeUsagesCount = new AtomicInteger(1);
   }
 
   /**
@@ -71,45 +61,11 @@ abstract class NativeObject implements AutoCloseable {
    */
   @Override
   public void close() {
-    synchronized (handleLock) {
-      if (closed) {
-        return;
-      }
-      /*
-       * ACTIVE USAGE COUNT UPDATE:
-       */
-      if (activeUsagesCount.decrementAndGet() > 0) {
-        logger.info("Waiting to close: " + toString());
-        /*
-         * In this case, there are still usages. Wait here until the last one informs us it is done.
-         */
-        try {
-          handleLock.wait();
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new RuntimeException("close interrupted", e);
-        }
-      }
-      /*
-       * In the else case, there are no usages out still.
-       */
-      doClose(handle);
-      closed = true;
+    if (closed) {
+      return;
     }
-  }
-
-  /** A managed usage to the backing native object. */
-  interface NativeUsage extends AutoCloseable {
-    /**
-     * Read the handle of the backing native object.
-     *
-     * @return a long representation of the address of the backing native object.
-     */
-    long handle();
-
-    /** Use this method when the usage is complete. */
-    @Override
-    void close();
+    doClose(handle);
+    closed = true;
   }
 
   /**
@@ -120,87 +76,21 @@ abstract class NativeObject implements AutoCloseable {
    * @return a usage from which the backing native object's handle can be used.
    */
   final NativeUsage use() {
-    return new DefaultNativeUsage();
+    return new NativeUsage();
   }
 
-  /**
-   * A nullable implementation of use().
-   *
-   * @param object possibly null NativeObject
-   * @return a {@link NativeUsage} for that object, or when null, {@link NativeUsage} which returns
-   *     address 0
-   */
-  static final NativeUsage useOptionally(NativeObject object) {
-    if (object == null) {
-      return NullNativeUsage.INSTANCE;
-    }
-    return object.use();
-  }
+  /** A managed usage to the backing native object. */
+  final class NativeUsage implements AutoCloseable {
 
-  /** A {@link NativeUsage} implementation for non-null Java objects. */
-  private final class DefaultNativeUsage implements NativeUsage {
-
-    private boolean usageClosed;
-
-    public DefaultNativeUsage() {
-      this.usageClosed = false;
-      /*
-       * ACTIVE USAGE COUNT UPDATE:
-       */
-      if (activeUsagesCount.getAndIncrement() <= 0) {
-        /*
-         * The old usage count less than or equal to 0 indicating closed, so an exception is thrown. However, it
-         * is necessary to call release() here prior to throwing, since the close() (which usually calls
-         * release()) will not be called upon exiting the try-with-resources due to the exception.
-         */
-        release();
+    public NativeUsage() {
+      if (isClosed()) {
         throw new IllegalStateException(
             NativeObject.this.getClass().getSimpleName() + " has been closed already.");
       }
     }
 
-    private void release() {
-      /*
-       * ACTIVE USAGE COUNT UPDATE:
-       */
-      if (activeUsagesCount.decrementAndGet() == 0) {
-        /*
-         * This is the last usage, so inform the thread waiting in NativeObject.close() that we are done.
-         */
-        synchronized (handleLock) {
-          handleLock.notifyAll();
-        }
-      }
-    }
-
-    @Override
     public long handle() {
-      if (usageClosed) {
-        throw new IllegalStateException("Native usage closed");
-      }
       return handle;
-    }
-
-    @Override
-    public void close() {
-      if (usageClosed) {
-        throw new IllegalStateException("Native usage closed");
-      }
-      release();
-      usageClosed = true;
-    }
-  }
-
-  /** A {@link NativeUsage} implementation for null Java objects. */
-  private static final class NullNativeUsage implements NativeUsage {
-
-    private static final NativeUsage INSTANCE = new NullNativeUsage();
-
-    private NullNativeUsage() {}
-
-    @Override
-    public long handle() {
-      return 0L;
     }
 
     @Override
